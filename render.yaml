@@ -1,0 +1,10 @@
+services:
+  - type: web
+    name: location-loger
+    env: node
+    plan: free
+    region: oregon
+    buildCommand: npm install
+    startCommand: npm start
+    autoDeploy: true
+    branch: main

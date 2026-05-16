@@ -1,67 +1,64 @@
-:root {
-  color-scheme: light;
-  font-family: Arial, sans-serif;
-}
-
 body {
   margin: 0;
-  padding: 0;
-  background: #f4f7fb;
-  color: #1a1a1a;
+  font-family: "Segoe UI", sans-serif;
+  background: linear-gradient(135deg,#2563eb,#06b6d4);
+  min-height: 100vh;
+  color: #111;
 }
 
 .container {
-  max-width: 760px;
+  max-width: 900px;
   margin: 40px auto;
-  padding: 24px;
-  background: #ffffff;
-  border-radius: 14px;
-  box-shadow: 0 20px 50px rgba(20, 40, 80, 0.08);
+  background: white;
+  padding: 25px;
+  border-radius: 16px;
+  box-shadow: 0 25px 60px rgba(0,0,0,0.2);
 }
 
 h1 {
-  margin-top: 0;
+  text-align: center;
 }
 
 button {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  padding: 12px 20px;
-  margin-bottom: 16px;
+  width: 100%;
+  padding: 14px;
   border: none;
-  border-radius: 8px;
-  background: #3b82f6;
-  color: #ffffff;
+  border-radius: 10px;
+  font-size: 17px;
+  background: #2563eb;
+  color: white;
   cursor: pointer;
-  font-size: 16px;
+  transition: 0.3s;
 }
 
 button:hover {
-  background: #2563eb;
+  background: #1d4ed8;
+  transform: scale(1.02);
 }
 
 #status {
-  margin-top: 12px;
+  margin: 15px 0;
   padding: 12px;
-  border-radius: 10px;
+  border-radius: 8px;
   background: #eef2ff;
-  color: #1e3a8a;
 }
 
-section {
-  margin-top: 24px;
+#map {
+  height: 350px;
+  margin: 20px 0;
+  border-radius: 12px;
+  overflow: hidden;
 }
 
 .card {
-  padding: 16px;
-  border: 1px solid #dbeafe;
-  border-radius: 12px;
+  background: #f8fafc;
+  padding: 14px;
+  border-radius: 10px;
   margin-bottom: 12px;
-  background: #ffffff;
+  border-left: 5px solid #2563eb;
 }
 
 .code {
   font-family: monospace;
-  color: #0369a1;
+  color: #0f172a;
 }

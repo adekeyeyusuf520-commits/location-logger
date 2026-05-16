@@ -2,83 +2,115 @@ const statusEl = document.getElementById("status");
 const locationsEl = document.getElementById("locations");
 const sendButton = document.getElementById("sendLocation");
 
-const formatTimestamp = (value) => {
-  const date = new Date(value);
-  return date.toLocaleString();
+let map;
+let markers = [];
+
+const showStatus = (msg, error=false) => {
+  statusEl.textContent = msg;
+  statusEl.style.color = error ? "red" : "green";
 };
 
-const showStatus = (message, isError = false) => {
-  statusEl.textContent = message;
-  statusEl.style.color = isError ? "#b91c1c" : "#1e3a8a";
+/* ---------- INIT MAP ---------- */
+const initMap = () => {
+  map = L.map("map").setView([7.3775, 3.9470], 13); // Ibadan default
+
+  L.tileLayer(
+    "https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png",
+    {
+      attribution: "&copy; OpenStreetMap contributors",
+    }
+  ).addTo(map);
 };
 
+/* ---------- RENDER LOCATIONS ---------- */
 const renderLocations = (data) => {
+
+  locationsEl.innerHTML = "";
+
+  markers.forEach(m => map.removeLayer(m));
+  markers = [];
+
   if (!data.locations.length) {
     locationsEl.innerHTML = "<p>No locations saved yet.</p>";
     return;
   }
 
-  locationsEl.innerHTML = data.locations
-    .map((item) => {
-      return `
-        <div class="card">
-          <div><strong>Latitude:</strong> <span class="code">${item.latitude}</span></div>
-          <div><strong>Longitude:</strong> <span class="code">${item.longitude}</span></div>
-          <div><strong>Accuracy:</strong> <span class="code">${item.accuracy ?? "n/a"}</span></div>
-          <div><strong>Time:</strong> ${formatTimestamp(item.timestamp)}</div>
-          ${item.label ? `<div><strong>Label:</strong> ${item.label}</div>` : ""}
-        </div>
-      `;
-    })
-    .join("");
+  data.locations.forEach(loc => {
+
+    // CARD UI
+    const card = document.createElement("div");
+    card.className = "card";
+
+    card.innerHTML = `
+      <strong>Latitude:</strong> ${loc.latitude}<br>
+      <strong>Longitude:</strong> ${loc.longitude}<br>
+      <strong>Accuracy:</strong> ${loc.accuracy ?? "n/a"}<br>
+      <strong>Time:</strong> ${new Date(loc.timestamp).toLocaleString()}
+    `;
+
+    locationsEl.appendChild(card);
+
+    // MAP MARKER
+    const marker = L.marker([loc.latitude, loc.longitude])
+      .addTo(map)
+      .bindPopup(`
+        <b>Saved Location</b><br>
+        Lat: ${loc.latitude}<br>
+        Lng: ${loc.longitude}
+      `);
+
+    markers.push(marker);
+  });
+
+  // Focus map on latest location
+  const last = data.locations[data.locations.length - 1];
+  map.setView([last.latitude, last.longitude], 15);
 };
 
+/* ---------- LOAD ---------- */
 const loadLocations = async () => {
-  try {
-    const response = await fetch("/api/locations");
-    const data = await response.json();
-    renderLocations(data);
-  } catch (error) {
-    showStatus("Unable to load locations.", true);
-  }
+  const res = await fetch("/api/locations");
+  const data = await res.json();
+  renderLocations(data);
 };
 
+/* ---------- SEND LOCATION ---------- */
 const sendLocation = () => {
+
   if (!navigator.geolocation) {
-    showStatus("Geolocation is not supported by your browser.", true);
+    showStatus("Geolocation not supported", true);
     return;
   }
 
-  showStatus("Getting current location...");
-  navigator.geolocation.getCurrentPosition(async (position) => {
+  showStatus("Getting location...");
+
+  navigator.geolocation.getCurrentPosition(async pos => {
+
     const payload = {
-      latitude: position.coords.latitude,
-      longitude: position.coords.longitude,
-      accuracy: position.coords.accuracy,
-      timestamp: position.timestamp,
+      latitude: pos.coords.latitude,
+      longitude: pos.coords.longitude,
+      accuracy: pos.coords.accuracy,
+      timestamp: pos.timestamp
     };
 
-    try {
-      const response = await fetch("/api/location", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(payload),
-      });
+    const res = await fetch("/api/location", {
+      method: "POST",
+      headers: {"Content-Type":"application/json"},
+      body: JSON.stringify(payload)
+    });
 
-      const result = await response.json();
-      if (!response.ok) {
-        throw new Error(result.error || "Unable to save location.");
-      }
+    const result = await res.json();
 
-      showStatus(`Location saved. Total saved: ${result.count}`);
-      loadLocations();
-    } catch (error) {
-      showStatus(error.message, true);
-    }
-  }, (error) => {
-    showStatus(`Geolocation error: ${error.message}`, true);
+    showStatus("Location Saved ✅");
+
+    loadLocations();
+
+  }, err => {
+    showStatus(err.message, true);
   });
 };
 
 sendButton.addEventListener("click", sendLocation);
+
+initMap();
 loadLocations();

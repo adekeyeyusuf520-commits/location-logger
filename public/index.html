@@ -1,44 +1,24 @@
 <!DOCTYPE html>
-<html lang="en">
+<html>
 <head>
-<meta charset="UTF-8" />
-<meta name="viewport" content="width=device-width, initial-scale=1.0" />
-
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
 <title>Location Logger</title>
-
-<link rel="stylesheet" href="style.css" />
-
-<!-- Leaflet Map -->
-<link
- rel="stylesheet"
- href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"
-/>
-
+<link rel="stylesheet" href="style.css">
+<link rel="preconnect" href="https://api.maptiler.com">
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"/>
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
 </head>
 
 <body>
-
 <div class="container">
-
-  <h1>📍 Location Logger</h1>
-  <p>Save and visualize locations on map</p>
-
-  <button id="sendLocation">Send Current Location</button>
-
-  <div id="status"></div>
-
-  <!-- MAP -->
-  <div id="map"></div>
-
-  <section>
-    <h2>Saved Locations</h2>
-    <div id="locations"></div>
-  </section>
-
+<h1>📍 Location Logger</h1>
+<button id="sendLocation">Send My Location</button>
+<div id="status"></div>
+<div id="map"></div>
+<h2>Saved Locations</h2>
+<div id="locations"></div>
 </div>
-
-<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
 <script src="script.js"></script>
-
 </body>
 </html>

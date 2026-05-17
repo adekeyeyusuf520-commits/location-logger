@@ -1,40 +1,34 @@
-const express = require("express");
-const path = require("path");
-const app = express();
-const port = process.env.PORT || 3000;
+require("dotenv").config();
 
-const locations = [];
+const express = require("express");
+const app = express();
+
+const PORT = process.env.PORT || 3000;
 
 app.use(express.json());
-app.use(express.static(path.join(__dirname, "public")));
+app.use(express.static("public"));
 
-app.get("/", (req, res) => {
-  res.sendFile(path.join(__dirname, "public", "index.html"));
+/* ---------- MEMORY DATABASE ---------- */
+let locations = [];
+
+/* ---------- SAVE LOCATION ---------- */
+app.post("/api/location", (req,res)=>{
+  locations.push(req.body);
+  res.json({status:"saved"});
 });
 
-app.post("/api/location", (req, res) => {
-  const { latitude, longitude, accuracy, timestamp, label } = req.body;
-
-  if (typeof latitude !== "number" || typeof longitude !== "number") {
-    return res.status(400).json({ error: "latitude and longitude are required as numbers." });
-  }
-
-  const entry = {
-    latitude,
-    longitude,
-    accuracy: typeof accuracy === "number" ? accuracy : null,
-    timestamp: timestamp || Date.now(),
-    label: label || null,
-  };
-
-  locations.push(entry);
-  return res.json({ status: "ok", entry, count: locations.length });
+/* ---------- GET LOCATIONS ---------- */
+app.get("/api/locations",(req,res)=>{
+  res.json({locations});
 });
 
-app.get("/api/locations", (req, res) => {
-  return res.json({ count: locations.length, locations });
+/* ---------- SEND MAP KEY SECURELY ---------- */
+app.get("/config",(req,res)=>{
+  res.json({
+    mapKey: process.env.MAP_API_KEY
+  });
 });
 
-app.listen(port, () => {
-  console.log(`Location Logger running on http://localhost:${port}`);
+app.listen(PORT,()=>{
+  console.log(`Server running on http://localhost:${PORT}`);
 });

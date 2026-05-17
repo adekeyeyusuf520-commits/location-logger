@@ -1,116 +1,95 @@
-const statusEl = document.getElementById("status");
-const locationsEl = document.getElementById("locations");
-const sendButton = document.getElementById("sendLocation");
+const statusEl=document.getElementById("status");
+const locationsEl=document.getElementById("locations");
+const btn=document.getElementById("sendLocation");
 
 let map;
-let markers = [];
-
-const showStatus = (msg, error=false) => {
-  statusEl.textContent = msg;
-  statusEl.style.color = error ? "red" : "green";
-};
+let markers=[];
 
 /* ---------- INIT MAP ---------- */
-const initMap = () => {
-  map = L.map("map").setView([7.3775, 3.9470], 13); // Ibadan default
+async function initMap(){
 
-  L.tileLayer(
-    "https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png",
-    {
-      attribution: "&copy; OpenStreetMap contributors",
-    }
-  ).addTo(map);
-};
+const config=await fetch("/config");
+const {mapKey}=await config.json();
 
-/* ---------- RENDER LOCATIONS ---------- */
-const renderLocations = (data) => {
+map=L.map("map").setView([7.3775,3.9470],13);
 
-  locationsEl.innerHTML = "";
+L.tileLayer(
+`https://api.maptiler.com/maps/streets/{z}/{x}/{y}.png?key=${mapKey}`,
+{
+tileSize:512,
+zoomOffset:-1,
+attribution:"© MapTiler"
+}
+).addTo(map);
 
-  markers.forEach(m => map.removeLayer(m));
-  markers = [];
+loadLocations();
+}
 
-  if (!data.locations.length) {
-    locationsEl.innerHTML = "<p>No locations saved yet.</p>";
-    return;
-  }
+/* ---------- LOAD LOCATIONS ---------- */
+async function loadLocations(){
 
-  data.locations.forEach(loc => {
+const res=await fetch("/api/locations");
+const data=await res.json();
 
-    // CARD UI
-    const card = document.createElement("div");
-    card.className = "card";
+locationsEl.innerHTML="";
 
-    card.innerHTML = `
-      <strong>Latitude:</strong> ${loc.latitude}<br>
-      <strong>Longitude:</strong> ${loc.longitude}<br>
-      <strong>Accuracy:</strong> ${loc.accuracy ?? "n/a"}<br>
-      <strong>Time:</strong> ${new Date(loc.timestamp).toLocaleString()}
-    `;
+markers.forEach(m=>map.removeLayer(m));
+markers=[];
 
-    locationsEl.appendChild(card);
+data.locations.forEach(loc=>{
 
-    // MAP MARKER
-    const marker = L.marker([loc.latitude, loc.longitude])
-      .addTo(map)
-      .bindPopup(`
-        <b>Saved Location</b><br>
-        Lat: ${loc.latitude}<br>
-        Lng: ${loc.longitude}
-      `);
+const card=document.createElement("div");
+card.className="card";
 
-    markers.push(marker);
-  });
+card.innerHTML=`
+Lat: ${loc.latitude}<br>
+Lng: ${loc.longitude}<br>
+${new Date(loc.timestamp).toLocaleString()}
+`;
 
-  // Focus map on latest location
-  const last = data.locations[data.locations.length - 1];
-  map.setView([last.latitude, last.longitude], 15);
-};
+locationsEl.appendChild(card);
 
-/* ---------- LOAD ---------- */
-const loadLocations = async () => {
-  const res = await fetch("/api/locations");
-  const data = await res.json();
-  renderLocations(data);
-};
+const marker=L.circleMarker(
+[loc.latitude,loc.longitude],
+{
+radius:8,
+color:"#2563eb",
+fillColor:"#2563eb",
+fillOpacity:0.9
+}).addTo(map);
+
+markers.push(marker);
+});
+
+if(data.locations.length){
+const last=data.locations[data.locations.length-1];
+map.setView([last.latitude,last.longitude],15);
+}
+}
 
 /* ---------- SEND LOCATION ---------- */
-const sendLocation = () => {
+btn.onclick=()=>{
 
-  if (!navigator.geolocation) {
-    showStatus("Geolocation not supported", true);
-    return;
-  }
+navigator.geolocation.getCurrentPosition(async pos=>{
 
-  showStatus("Getting location...");
+statusEl.innerText="Saving location...";
 
-  navigator.geolocation.getCurrentPosition(async pos => {
+await fetch("/api/location",{
+method:"POST",
+headers:{"Content-Type":"application/json"},
+body:JSON.stringify({
+latitude:pos.coords.latitude,
+longitude:pos.coords.longitude,
+timestamp:Date.now()
+})
+});
 
-    const payload = {
-      latitude: pos.coords.latitude,
-      longitude: pos.coords.longitude,
-      accuracy: pos.coords.accuracy,
-      timestamp: pos.timestamp
-    };
+statusEl.innerText="Location Saved ✅";
 
-    const res = await fetch("/api/location", {
-      method: "POST",
-      headers: {"Content-Type":"application/json"},
-      body: JSON.stringify(payload)
-    });
+loadLocations();
 
-    const result = await res.json();
-
-    showStatus("Location Saved ✅");
-
-    loadLocations();
-
-  }, err => {
-    showStatus(err.message, true);
-  });
+});
 };
 
-sendButton.addEventListener("click", sendLocation);
-
 initMap();
-loadLocations();
+  
